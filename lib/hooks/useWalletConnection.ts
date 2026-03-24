@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useManager, useWallet } from "@cosmos-kit/react-lite";
 import { CHAIN_NAME } from "@/lib/constants/chain";
-import { WalletEntry } from "@/lib/wallets/registry";
+import { WalletEntry, WALLET_REGISTRY } from "@/lib/wallets/registry";
 import { WalletErrorType, classifyWalletError } from "@/lib/wallets/errors";
 import { connectWithTimeout } from "@/lib/wallets/connect-with-timeout";
 import { useTwilight } from "@/lib/providers/twilight";
@@ -53,6 +53,30 @@ export function useWalletConnection(): UseWalletConnectionReturn {
       if (qrPollRef.current) clearInterval(qrPollRef.current);
     };
   }, []);
+
+  // Auto-disconnect stale mobile wallet sessions on page refresh.
+  // WalletConnect sessions don't survive refresh, so cosmos-kit reports
+  // a false "Connected" with a cached address. Detect and disconnect once.
+  const hasCheckedStaleRef = useRef(false);
+  useEffect(() => {
+    if (hasCheckedStaleRef.current) return;
+    if (!mainWallet || status !== "Connected") return;
+
+    hasCheckedStaleRef.current = true;
+
+    const walletName = mainWallet.walletName;
+    const isMobileWallet = WALLET_REGISTRY.some(
+      (w) => w.id === walletName && w.platform === "mobile"
+    );
+
+    if (isMobileWallet) {
+      mainWallet
+        .disconnect(false, { walletconnect: { removeAllPairings: true } })
+        .catch((err) =>
+          console.error("Failed to disconnect stale mobile session:", err)
+        );
+    }
+  }, [mainWallet, status]);
 
   // Auto-reset to idle when connection fully succeeds (status + address)
   useEffect(() => {
