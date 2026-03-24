@@ -29,12 +29,13 @@ export function detectInAppBrowser(): WalletEntry | null {
     Record<string, unknown> | undefined
   >;
 
-  if ((w.keplr as Record<string, unknown> | undefined)?.mode === "mobile-web") {
-    return WALLET_REGISTRY.find((e) => e.id === "keplr-extension") ?? null;
-  }
-
+  // Check Leap before Keplr — Leap's in-app browser also injects window.keplr
   if ((w.leap as Record<string, unknown> | undefined)?.mode === "mobile-web") {
     return WALLET_REGISTRY.find((e) => e.id === "leap-extension") ?? null;
+  }
+
+  if ((w.keplr as Record<string, unknown> | undefined)?.mode === "mobile-web") {
+    return WALLET_REGISTRY.find((e) => e.id === "keplr-extension") ?? null;
   }
 
   const cosmostation = w.cosmostation as
@@ -84,14 +85,15 @@ export function getInAppWalletProvider(): {
 
   const w = window as unknown as Record<string, unknown>;
 
-  const keplr = w.keplr as RawWalletObject | undefined;
-  if (keplr?.mode === "mobile-web" && isValidProvider(keplr)) {
-    return { name: "Keplr", provider: keplr };
-  }
-
+  // Check Leap before Keplr — Leap's in-app browser also injects window.keplr
   const leap = w.leap as RawWalletObject | undefined;
   if (leap?.mode === "mobile-web" && isValidProvider(leap)) {
     return { name: "Leap", provider: leap };
+  }
+
+  const keplr = w.keplr as RawWalletObject | undefined;
+  if (keplr?.mode === "mobile-web" && isValidProvider(keplr)) {
+    return { name: "Keplr", provider: keplr };
   }
 
   const cosmostation = w.cosmostation as
