@@ -49,6 +49,65 @@ export function detectInAppBrowser(): WalletEntry | null {
   return null;
 }
 
+export interface WalletProvider {
+  experimentalSuggestChain: (chainInfo: unknown) => Promise<void>;
+  enable: (chainId: string) => Promise<void>;
+  getKey: (chainId: string) => Promise<unknown>;
+}
+
+interface RawWalletObject {
+  mode?: string;
+  experimentalSuggestChain?: (chainInfo: unknown) => Promise<void>;
+  enable?: (chainId: string) => Promise<void>;
+  getKey?: (chainId: string) => Promise<unknown>;
+}
+
+function isValidProvider(
+  obj: RawWalletObject
+): obj is WalletProvider & { mode?: string } {
+  return (
+    typeof obj.experimentalSuggestChain === "function" &&
+    typeof obj.enable === "function" &&
+    typeof obj.getKey === "function"
+  );
+}
+
+/**
+ * Get the actual wallet provider object when running inside a wallet's in-app browser.
+ * Returns the provider for calling experimentalSuggestChain, enable, getKey, etc.
+ */
+export function getInAppWalletProvider(): {
+  name: string;
+  provider: WalletProvider;
+} | null {
+  if (typeof window === "undefined") return null;
+
+  const w = window as unknown as Record<string, unknown>;
+
+  const keplr = w.keplr as RawWalletObject | undefined;
+  if (keplr?.mode === "mobile-web" && isValidProvider(keplr)) {
+    return { name: "Keplr", provider: keplr };
+  }
+
+  const leap = w.leap as RawWalletObject | undefined;
+  if (leap?.mode === "mobile-web" && isValidProvider(leap)) {
+    return { name: "Leap", provider: leap };
+  }
+
+  const cosmostation = w.cosmostation as
+    | { providers?: { keplr?: RawWalletObject } }
+    | undefined;
+  const cosmostationKeplr = cosmostation?.providers?.keplr;
+  if (
+    cosmostationKeplr?.mode === "mobile-web" &&
+    isValidProvider(cosmostationKeplr)
+  ) {
+    return { name: "Cosmostation", provider: cosmostationKeplr };
+  }
+
+  return null;
+}
+
 /**
  * Categorize wallets based on platform and installation status.
  *

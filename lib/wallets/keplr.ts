@@ -1,6 +1,10 @@
-import type { Asset, AssetList, Chain } from "@chain-registry/types";
 import type { ChainRecord, MainWalletBase } from "@cosmos-kit/core";
 import type { ChainInfo } from "@keplr-wallet/types";
+import {
+  getBech32Config,
+  getCoinDecimals,
+  getEndpointAddress,
+} from "./chain-info";
 
 type MutableWalletWithPatchFlag = MainWalletBase & {
   __twilightKeplrMobilePatched?: boolean;
@@ -12,35 +16,6 @@ type MutableWalletWithPatchFlag = MainWalletBase & {
 
 const KEPLR_MOBILE_SUGGESTED_CHAINS_KEY =
   "cosmos-kit@2:twilight/keplr-mobile-suggested-chains";
-
-function getBech32Config(chain: Chain): ChainInfo["bech32Config"] {
-  if (chain.bech32_config) {
-    return chain.bech32_config as ChainInfo["bech32Config"];
-  }
-
-  const prefix = chain.bech32_prefix;
-
-  if (!prefix) {
-    throw new Error(`Missing bech32 prefix for chain ${chain.chain_name}`);
-  }
-
-  return {
-    bech32PrefixAccAddr: prefix,
-    bech32PrefixAccPub: `${prefix}pub`,
-    bech32PrefixValAddr: `${prefix}valoper`,
-    bech32PrefixValPub: `${prefix}valoperpub`,
-    bech32PrefixConsAddr: `${prefix}valcons`,
-    bech32PrefixConsPub: `${prefix}valconspub`,
-  };
-}
-
-function getCoinDecimals(asset: Asset): number {
-  return (
-    asset.denom_units.find((unit) => unit.denom === asset.display)?.exponent ??
-    asset.denom_units[0]?.exponent ??
-    0
-  );
-}
 
 function buildKeplrChainInfo(chainRecord: ChainRecord): ChainInfo {
   const chain = chainRecord.chain;
@@ -86,7 +61,6 @@ function buildKeplrChainInfo(chainRecord: ChainRecord): ChainInfo {
     .filter((currency) => feeDenoms.has(currency.coinMinimalDenom))
     .map((currency) => {
       const gasPriceStep = gasPriceSteps[currency.coinMinimalDenom];
-
       return gasPriceStep ? { ...currency, gasPriceStep } : currency;
     });
 
@@ -111,28 +85,6 @@ function buildKeplrChainInfo(chainRecord: ChainRecord): ChainInfo {
     feeCurrencies: feeCurrencies.length > 0 ? feeCurrencies : [stakeCurrency],
     features: [],
   };
-}
-
-function getEndpointAddress(
-  endpoint: string | { address?: string; url?: string } | undefined,
-  type: "rpc" | "rest",
-  chainName: string
-): string {
-  if (typeof endpoint === "string" && endpoint) {
-    return endpoint;
-  }
-
-  if (endpoint && typeof endpoint === "object") {
-    if (endpoint.address) {
-      return endpoint.address;
-    }
-
-    if (endpoint.url) {
-      return endpoint.url;
-    }
-  }
-
-  throw new Error(`Missing ${type} endpoint for chain ${chainName}`);
 }
 
 function readSuggestedChains(): string[] {

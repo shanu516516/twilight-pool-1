@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConnectionState } from "@/lib/hooks/useWalletConnection";
 import { getErrorMessage } from "@/lib/wallets/errors";
+import { getWalletDeepLink } from "@/lib/wallets/deep-links";
 import NextImage from "@/components/next-image";
 import Button from "@/components/button";
 import {
@@ -123,6 +124,38 @@ function DownloadButtons({
   );
 }
 
+function OpenInAppLink({
+  wallet,
+  label,
+  hint,
+}: {
+  wallet: WalletEntry;
+  label?: string;
+  hint?: string;
+}) {
+  const deepLinkUrl = useMemo(() => {
+    if (typeof window === "undefined" || wallet.platform !== "mobile")
+      return null;
+    return getWalletDeepLink(wallet.id, window.location.origin + "/add-chain");
+  }, [wallet.id, wallet.platform]);
+
+  if (!deepLinkUrl) return null;
+
+  return (
+    <div className="mt-2">
+      {hint && (
+        <p className="mb-1 text-[10px] text-primary-accent/50">{hint}</p>
+      )}
+      <Button asChild variant="ui" size="small" className="gap-1.5 text-xs">
+        <a href={deepLinkUrl}>
+          <Smartphone className="h-3.5 w-3.5" />
+          {label ?? `Open in ${wallet.name}`}
+        </a>
+      </Button>
+    </div>
+  );
+}
+
 interface WalletStatePaneProps {
   state: ConnectionState;
   onRetry: () => void;
@@ -209,6 +242,7 @@ export default function WalletStatePane({
             Open {state.wallet.name} and scan the QR code to connect
           </p>
         </div>
+        <OpenInAppLink wallet={state.wallet} hint="QR not working?" />
       </div>
     );
   }
@@ -235,6 +269,7 @@ export default function WalletStatePane({
           </p>
         </div>
         <DownloadButtons wallet={state.wallet} onReset={onReset} />
+        <OpenInAppLink wallet={state.wallet} hint="Already installed?" />
       </div>
     );
   }
@@ -255,18 +290,21 @@ export default function WalletStatePane({
           <p className="text-sm font-medium">{title}</p>
           <p className="mt-1 text-xs text-primary-accent">{description}</p>
         </div>
-        <div className="flex gap-2">
-          <Button size="small" onClick={onRetry} className="text-xs">
-            Try Again
-          </Button>
-          <Button
-            variant="ui"
-            size="small"
-            onClick={onReset}
-            className="text-xs"
-          >
-            Go back
-          </Button>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex gap-2">
+            <Button size="small" onClick={onRetry} className="text-xs">
+              Try Again
+            </Button>
+            <Button
+              variant="ui"
+              size="small"
+              onClick={onReset}
+              className="text-xs"
+            >
+              Go back
+            </Button>
+          </div>
+          <OpenInAppLink wallet={state.wallet} label="Open in App" />
         </div>
       </div>
     );
