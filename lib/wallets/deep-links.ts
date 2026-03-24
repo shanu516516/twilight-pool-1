@@ -1,6 +1,6 @@
 const DEEP_LINK_MAP: Record<string, (url: string) => string> = {
   "keplr-mobile": (url) =>
-    `https://deeplink.keplr.app/browser?url=${encodeURIComponent(url)}`,
+    `https://deeplink.keplr.app?url=${encodeURIComponent(url)}`,
   "leap-cosmos-mobile": (url) =>
     `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
   "cosmostation-mobile": (url) =>
