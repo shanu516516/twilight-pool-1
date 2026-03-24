@@ -10,9 +10,9 @@ interface DeepLinkBuilder {
 
 const DEEP_LINK_MAP: Record<string, DeepLinkBuilder> = {
   "keplr-mobile": {
-    ios: (url) => `keplrwallet://web?url=${encodeURIComponent(url)}`,
+    ios: (url) => `keplrwallet://web-browser?url=${encodeURIComponent(url)}`,
     android: (url) =>
-      `intent://web?url=${encodeURIComponent(url)}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`,
+      `intent://web-browser?url=${encodeURIComponent(url)}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`,
   },
   "leap-cosmos-mobile": {
     ios: (url) =>
