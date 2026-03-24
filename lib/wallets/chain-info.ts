@@ -128,5 +128,10 @@ export function buildChainInfo(chain: Chain, assets: AssetList): ChainInfo {
     stakeCurrency,
     feeCurrencies: feeCurrencies.length > 0 ? feeCurrencies : [stakeCurrency],
     ...(logoUrl && { image: logoUrl }),
+    theme: {
+      primaryColor: "#6C5CE7",
+      gradient:
+        "linear-gradient(180deg, rgba(108,92,231,0.32) 0%, rgba(108,92,231,0) 100%)",
+    },
   } as ChainInfo;
 }
