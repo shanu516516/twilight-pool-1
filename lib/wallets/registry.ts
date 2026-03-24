@@ -1,7 +1,7 @@
 export type WalletPlatform = "extension" | "mobile" | "snap";
 
 export interface DownloadLink {
-  browser: "chrome" | "brave" | "firefox";
+  browser: "chrome" | "brave" | "firefox" | "ios" | "android";
   url: string;
 }
 
@@ -95,17 +95,47 @@ export const WALLET_REGISTRY: WalletEntry[] = [
     name: "Keplr Mobile",
     logo: "/images/keplr-logo.png",
     platform: "mobile",
+    downloadLinks: [
+      {
+        browser: "ios",
+        url: "https://apps.apple.com/app/keplr-wallet/id1567851089",
+      },
+      {
+        browser: "android",
+        url: "https://play.google.com/store/apps/details?id=com.chainapsis.keplr",
+      },
+    ],
   },
   {
     id: "cosmostation-mobile",
     name: "Cosmostation Mobile",
     logo: "/images/cosmostation-logo.png",
     platform: "mobile",
+    downloadLinks: [
+      {
+        browser: "ios",
+        url: "https://apps.apple.com/app/cosmostation/id1459830339",
+      },
+      {
+        browser: "android",
+        url: "https://play.google.com/store/apps/details?id=wannabit.io.cosmostaion",
+      },
+    ],
   },
   {
     id: "leap-cosmos-mobile",
     name: "Leap Mobile",
     logo: "/images/leap-logo.png",
     platform: "mobile",
+    downloadLinks: [
+      {
+        browser: "ios",
+        url: "https://apps.apple.com/app/leap-cosmos/id1642465549",
+      },
+      {
+        browser: "android",
+        url: "https://play.google.com/store/apps/details?id=io.leapwallet.cosmos",
+      },
+    ],
   },
 ];

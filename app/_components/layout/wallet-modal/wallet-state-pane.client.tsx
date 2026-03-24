@@ -5,9 +5,123 @@ import { ConnectionState } from "@/lib/hooks/useWalletConnection";
 import { getErrorMessage } from "@/lib/wallets/errors";
 import NextImage from "@/components/next-image";
 import Button from "@/components/button";
-import { AlertCircle, Chrome, Loader2, Shield, Wallet } from "lucide-react";
+import {
+  AlertCircle,
+  Chrome,
+  Loader2,
+  Shield,
+  Smartphone,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import WalletQRCode from "./wallet-qr-code.client";
+import { WalletEntry } from "@/lib/wallets/registry";
+
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+    </svg>
+  );
+}
+
+function PlayStoreIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.61-.92zm.653-.463L15.11 6.95l-2.852 2.852L4.263 1.35zM20.11 10.95L17.6 9.51l-3.14 3.14 3.14 3.14 2.51-1.44a1.246 1.246 0 000-2.4zm-5.36 3.49l-2.852 2.853L4.263 22.65l7.735-7.735 2.752-2.475z" />
+    </svg>
+  );
+}
+
+function DownloadButtons({
+  wallet,
+  onReset,
+}: {
+  wallet: WalletEntry;
+  onReset: () => void;
+}) {
+  const links = wallet.downloadLinks;
+
+  if (!links || links.length === 0) {
+    return (
+      <div className="flex gap-2">
+        {wallet.downloadUrl && (
+          <Button asChild size="small" className="text-xs">
+            <Link href={wallet.downloadUrl} target="_blank">
+              Install {wallet.name}
+            </Link>
+          </Button>
+        )}
+        <Button variant="ui" size="small" onClick={onReset} className="text-xs">
+          Go back
+        </Button>
+      </div>
+    );
+  }
+
+  const mobileLinks = links.filter(
+    (l) => l.browser === "ios" || l.browser === "android"
+  );
+  const desktopLinks = links.filter(
+    (l) => l.browser !== "ios" && l.browser !== "android"
+  );
+
+  const browserIcon = (browser: string) => {
+    switch (browser) {
+      case "chrome":
+        return <Chrome className="h-3.5 w-3.5" />;
+      case "brave":
+        return <Shield className="h-3.5 w-3.5" />;
+      case "ios":
+        return <AppleIcon className="h-3.5 w-3.5" />;
+      case "android":
+        return <PlayStoreIcon className="h-3.5 w-3.5" />;
+      default:
+        return <Smartphone className="h-3.5 w-3.5" />;
+    }
+  };
+
+  const browserLabel = (browser: string) => {
+    switch (browser) {
+      case "chrome":
+        return "Chrome";
+      case "brave":
+        return "Brave";
+      case "ios":
+        return "App Store";
+      case "android":
+        return "Google Play";
+      default:
+        return browser;
+    }
+  };
+
+  // Show app store links for mobile wallets, browser links for extensions
+  const linksToShow = wallet.platform === "mobile" ? mobileLinks : desktopLinks;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
+        {linksToShow.map((link) => (
+          <Button
+            key={link.browser}
+            asChild
+            size="small"
+            className="gap-1.5 text-xs"
+          >
+            <Link href={link.url} target="_blank">
+              {browserIcon(link.browser)}
+              {browserLabel(link.browser)}
+            </Link>
+          </Button>
+        ))}
+      </div>
+      <Button variant="ui" size="small" onClick={onReset} className="text-xs">
+        Go back
+      </Button>
+    </div>
+  );
+}
 
 interface WalletStatePaneProps {
   state: ConnectionState;
@@ -115,59 +229,12 @@ export default function WalletStatePane({
         <div>
           <p className="text-sm font-medium">{state.wallet.name} not found</p>
           <p className="mt-1 text-xs text-primary-accent">
-            Install the {state.wallet.name} extension to continue
+            {state.wallet.platform === "mobile"
+              ? `Install the ${state.wallet.name} app to continue`
+              : `Install the ${state.wallet.name} extension to continue`}
           </p>
         </div>
-        {state.wallet.downloadLinks && state.wallet.downloadLinks.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              {state.wallet.downloadLinks.map((link) => (
-                <Button
-                  key={link.browser}
-                  asChild
-                  size="small"
-                  className="gap-1.5 text-xs"
-                >
-                  <Link href={link.url} target="_blank">
-                    {link.browser === "chrome" && (
-                      <Chrome className="h-3.5 w-3.5" />
-                    )}
-                    {link.browser === "brave" && (
-                      <Shield className="h-3.5 w-3.5" />
-                    )}
-                    {link.browser === "chrome" ? "Chrome" : "Brave"}
-                  </Link>
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="ui"
-              size="small"
-              onClick={onReset}
-              className="text-xs"
-            >
-              Go back
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            {state.wallet.downloadUrl && (
-              <Button asChild size="small" className="text-xs">
-                <Link href={state.wallet.downloadUrl} target="_blank">
-                  Install {state.wallet.name}
-                </Link>
-              </Button>
-            )}
-            <Button
-              variant="ui"
-              size="small"
-              onClick={onReset}
-              className="text-xs"
-            >
-              Go back
-            </Button>
-          </div>
-        )}
+        <DownloadButtons wallet={state.wallet} onReset={onReset} />
       </div>
     );
   }
