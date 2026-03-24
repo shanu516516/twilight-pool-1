@@ -15,10 +15,8 @@ const DEEP_LINK_MAP: Record<string, DeepLinkBuilder> = {
       `intent://web-browser?url=${encodeURIComponent(url)}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`,
   },
   "leap-cosmos-mobile": {
-    ios: (url) =>
-      `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
-    android: (url) =>
-      `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
+    ios: (url) => `leapcosmos://browser?url=${encodeURIComponent(url)}`,
+    android: (url) => `leapcosmos://browser?url=${encodeURIComponent(url)}`,
   },
   "cosmostation-mobile": {
     ios: (url) =>

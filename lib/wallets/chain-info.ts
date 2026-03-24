@@ -75,13 +75,22 @@ export function buildChainInfo(chain: Chain, assets: AssetList): ChainInfo {
     ])
   );
 
-  const currencies = chainAssets.map((asset) => ({
-    coinDenom: asset.symbol,
-    coinMinimalDenom: asset.base,
-    coinDecimals: getCoinDecimals(asset),
-    coinGeckoId: asset.coingecko_id || undefined,
-    coinImageUrl: asset.logo_URIs?.svg ?? asset.logo_URIs?.png,
-  }));
+  const currencies = chainAssets.map((asset) => {
+    const currency: {
+      coinDenom: string;
+      coinMinimalDenom: string;
+      coinDecimals: number;
+      coinGeckoId?: string;
+    } = {
+      coinDenom: asset.symbol,
+      coinMinimalDenom: asset.base,
+      coinDecimals: getCoinDecimals(asset),
+    };
+    if (asset.coingecko_id) {
+      currency.coinGeckoId = asset.coingecko_id;
+    }
+    return currency;
+  });
 
   const stakeCurrency =
     currencies.find(
@@ -96,6 +105,9 @@ export function buildChainInfo(chain: Chain, assets: AssetList): ChainInfo {
       const gasPriceStep = gasPriceSteps[currency.coinMinimalDenom];
       return gasPriceStep ? { ...currency, gasPriceStep } : currency;
     });
+
+  const logoUrl =
+    chainAssets[0]?.logo_URIs?.svg ?? chainAssets[0]?.logo_URIs?.png;
 
   return {
     rpc: getEndpointAddress(
@@ -115,6 +127,6 @@ export function buildChainInfo(chain: Chain, assets: AssetList): ChainInfo {
     currencies,
     stakeCurrency,
     feeCurrencies: feeCurrencies.length > 0 ? feeCurrencies : [stakeCurrency],
-    features: [],
-  };
+    ...(logoUrl && { image: logoUrl }),
+  } as ChainInfo;
 }
