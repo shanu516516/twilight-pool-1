@@ -1,10 +1,31 @@
-const DEEP_LINK_MAP: Record<string, (url: string) => string> = {
-  "keplr-mobile": (url) =>
-    `https://deeplink.keplr.app?url=${encodeURIComponent(url)}`,
-  "leap-cosmos-mobile": (url) =>
-    `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
-  "cosmostation-mobile": (url) =>
-    `https://app.cosmostation.io/dapp?url=${encodeURIComponent(url)}`,
+function isAndroid(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+
+interface DeepLinkBuilder {
+  ios: (url: string) => string;
+  android: (url: string) => string;
+}
+
+const DEEP_LINK_MAP: Record<string, DeepLinkBuilder> = {
+  "keplr-mobile": {
+    ios: (url) => `keplrwallet://web?url=${encodeURIComponent(url)}`,
+    android: (url) =>
+      `intent://web?url=${encodeURIComponent(url)}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`,
+  },
+  "leap-cosmos-mobile": {
+    ios: (url) =>
+      `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
+    android: (url) =>
+      `https://deeplink.leapwallet.io?url=${encodeURIComponent(url)}`,
+  },
+  "cosmostation-mobile": {
+    ios: (url) =>
+      `https://app.cosmostation.io/dapp?url=${encodeURIComponent(url)}`,
+    android: (url) =>
+      `https://app.cosmostation.io/dapp?url=${encodeURIComponent(url)}`,
+  },
 };
 
 /**
@@ -16,5 +37,6 @@ export function getWalletDeepLink(
   targetUrl: string
 ): string | null {
   const builder = DEEP_LINK_MAP[walletId];
-  return builder ? builder(targetUrl) : null;
+  if (!builder) return null;
+  return isAndroid() ? builder.android(targetUrl) : builder.ios(targetUrl);
 }

@@ -1,4 +1,4 @@
-const CONNECTION_TIMEOUT_MS = 15_000;
+const CONNECTION_TIMEOUT_MS = 30_000;
 
 export async function connectWithTimeout(
   connectFn: () => Promise<void>,
