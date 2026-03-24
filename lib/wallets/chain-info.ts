@@ -68,9 +68,9 @@ export function buildChainInfo(chain: Chain, assets: AssetList): ChainInfo {
     (chain.fees?.fee_tokens ?? []).map((token) => [
       token.denom,
       {
-        low: token.low_gas_price ?? 0.01,
-        average: token.average_gas_price ?? 0.025,
-        high: token.high_gas_price ?? 0.04,
+        low: token.low_gas_price ?? 1,
+        average: token.average_gas_price ?? 1,
+        high: token.high_gas_price ?? 1,
       },
     ])
   );
