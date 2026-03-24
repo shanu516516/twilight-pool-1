@@ -19,10 +19,8 @@ const DEEP_LINK_MAP: Record<string, DeepLinkBuilder> = {
     android: (url) => `leapcosmos://browser?url=${encodeURIComponent(url)}`,
   },
   "cosmostation-mobile": {
-    ios: (url) =>
-      `https://app.cosmostation.io/dapp?url=${encodeURIComponent(url)}`,
-    android: (url) =>
-      `https://app.cosmostation.io/dapp?url=${encodeURIComponent(url)}`,
+    ios: (url) => `cosmostation://browser?url=${encodeURIComponent(url)}`,
+    android: (url) => `cosmostation://browser?url=${encodeURIComponent(url)}`,
   },
 };
 
