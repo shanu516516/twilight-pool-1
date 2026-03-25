@@ -128,7 +128,6 @@ export function useWalletConnection(): UseWalletConnectionReturn {
 
       setState({ view: "connecting", wallet });
 
-      const visibilityCleanup = { fn: null as (() => void) | null };
       try {
         // In-app browser: suggest chain before connecting so the wallet knows about it
         const inAppProvider = getInAppWalletProvider();
@@ -171,36 +170,7 @@ export function useWalletConnection(): UseWalletConnectionReturn {
             }
           }, 200);
 
-          // When the user switches to Keplr to approve, Chrome suspends WebSocket
-          // activity. The approval may go through on Keplr's side, but the
-          // connectPromise never resolves because the WS message is lost.
-          // On visibility change (user returns), poll for the address briefly.
-          const visibilityPromise = new Promise<void>((resolve) => {
-            const onVisible = () => {
-              if (document.visibilityState !== "visible") return;
-              let checks = 0;
-              const recheck = setInterval(() => {
-                checks++;
-                if (targetChainWallet.address) {
-                  clearInterval(recheck);
-                  document.removeEventListener("visibilitychange", onVisible);
-                  visibilityCleanup.fn = null;
-                  resolve();
-                } else if (checks >= 15) {
-                  clearInterval(recheck);
-                  document.removeEventListener("visibilitychange", onVisible);
-                  visibilityCleanup.fn = null;
-                }
-              }, 200);
-            };
-            document.addEventListener("visibilitychange", onVisible);
-            visibilityCleanup.fn = () => {
-              document.removeEventListener("visibilitychange", onVisible);
-            };
-          });
-
-          await Promise.race([connectPromise, visibilityPromise]);
-          visibilityCleanup.fn?.();
+          await connectPromise;
 
           if (qrPollRef.current) {
             clearInterval(qrPollRef.current);
@@ -219,7 +189,6 @@ export function useWalletConnection(): UseWalletConnectionReturn {
 
         // Success — state will auto-reset via the useEffect above
       } catch (err) {
-        visibilityCleanup.fn?.();
         if (qrPollRef.current) {
           clearInterval(qrPollRef.current);
           qrPollRef.current = null;

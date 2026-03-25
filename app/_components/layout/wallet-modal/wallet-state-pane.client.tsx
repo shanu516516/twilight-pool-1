@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Chrome,
   Loader2,
+  RefreshCw,
   Shield,
   Smartphone,
   Wallet,
@@ -237,6 +238,7 @@ export default function WalletStatePane({
     const isMobile = isMobileBrowser();
 
     // Mobile: no QR (can't scan own screen), show waiting state
+    // with a reconnect button for when user returns from the wallet app
     if (isMobile) {
       return (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
@@ -254,12 +256,16 @@ export default function WalletStatePane({
           </div>
           <div>
             <p className="text-sm font-medium">
-              Opening {state.wallet.name}...
+              Approve in {state.wallet.name}
             </p>
             <p className="mt-1 text-xs text-primary-accent">
-              Approve the connection in the {state.wallet.name} app
+              Open the {state.wallet.name} app and approve the connection
             </p>
           </div>
+          <Button size="small" className="gap-2 text-xs" onClick={onRetry}>
+            <RefreshCw className="h-3.5 w-3.5" />
+            Approved? Tap to connect
+          </Button>
           <button
             type="button"
             onClick={onReset}
