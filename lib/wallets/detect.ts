@@ -132,7 +132,9 @@ export function categorizeWallets(): CategorizedWallets {
   if (isMobile) {
     return {
       installed: [],
-      mobile: WALLET_REGISTRY.filter((w) => w.platform === "mobile"),
+      mobile: WALLET_REGISTRY.filter(
+        (w) => w.platform === "mobile" && w.id !== "leap-cosmos-mobile"
+      ),
       other: [],
     };
   }
