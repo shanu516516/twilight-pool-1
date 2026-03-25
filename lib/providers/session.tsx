@@ -132,6 +132,11 @@ export const SessionStoreProvider = ({
       return;
     }
 
+    // In-app browsers: delay before sign to avoid racing chain addition
+    if (detectInAppBrowser()) {
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+
     const success = await requestSign();
     if (!success) return;
     setIsHydrated(false);
@@ -206,6 +211,12 @@ export const SessionStoreProvider = ({
             });
           } else {
             const oldPrice = storeRef.current.getState().price;
+
+            // In-app browsers: Keplr crashes if the sign request arrives
+            // immediately after chain addition. Give it time to settle.
+            if (detectInAppBrowser()) {
+              await new Promise((r) => setTimeout(r, 1500));
+            }
 
             setSignStatus("pending");
             const [, newPrivateKey] = await generateSignMessage(
