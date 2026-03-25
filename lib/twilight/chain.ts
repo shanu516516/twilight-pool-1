@@ -8,7 +8,7 @@ import { ChainWalletBase } from "@cosmos-kit/core";
 function buildAdr036SignDoc(signer: string, message: string) {
   const msgBytes = Buffer.from(message).toString("base64");
   return {
-    chain_id: "",
+    chain_id: "nyks",
     account_number: "0",
     sequence: "0",
     fee: { gas: "0", amount: [] },
