@@ -110,6 +110,13 @@ export const SessionStoreProvider = ({
     if (status !== WalletStatus.Connected || !storeRef.current || !isHydrated)
       return;
 
+    // Don't auto-fire sign request on /add-chain page
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname === "/add-chain"
+    )
+      return;
+
     const chainWallet = mainWallet?.getChainWallet("nyks");
     const existingPrivateKey = storeRef.current.getState().privateKey;
 
@@ -181,35 +188,52 @@ export const SessionStoreProvider = ({
 
         const newState = storeRef.current.getState();
 
+        // On /add-chain page, only rehydrate the store — don't fire the
+        // sign request. The user is there to add the chain, not to trade.
+        const isAddChainPage =
+          typeof window !== "undefined" &&
+          window.location.pathname === "/add-chain";
+
         if (oldState === newState) {
-          const oldPrice = storeRef.current.getState().price;
-
-          setSignStatus("pending");
-          const [, newPrivateKey] = await generateSignMessage(
-            chainWallet,
-            chainAddress,
-            "Hello Twilight!"
-          );
-
-          if (newPrivateKey) {
+          if (isAddChainPage) {
+            const oldPrice = storeRef.current.getState().price;
             storeRef.current.setState({
               ...storeRef.current.getInitialState(),
               price:
                 oldPrice.btcPrice === 0
                   ? storeRef.current.getState().price
                   : oldPrice,
-              privateKey: newPrivateKey as string,
             });
-            setSignStatus("signed");
           } else {
-            storeRef.current.setState({
-              ...storeRef.current.getInitialState(),
-              price:
-                oldPrice.btcPrice === 0
-                  ? storeRef.current.getState().price
-                  : oldPrice,
-            });
-            setSignStatus("rejected");
+            const oldPrice = storeRef.current.getState().price;
+
+            setSignStatus("pending");
+            const [, newPrivateKey] = await generateSignMessage(
+              chainWallet,
+              chainAddress,
+              "Hello Twilight!"
+            );
+
+            if (newPrivateKey) {
+              storeRef.current.setState({
+                ...storeRef.current.getInitialState(),
+                price:
+                  oldPrice.btcPrice === 0
+                    ? storeRef.current.getState().price
+                    : oldPrice,
+                privateKey: newPrivateKey as string,
+              });
+              setSignStatus("signed");
+            } else {
+              storeRef.current.setState({
+                ...storeRef.current.getInitialState(),
+                price:
+                  oldPrice.btcPrice === 0
+                    ? storeRef.current.getState().price
+                    : oldPrice,
+              });
+              setSignStatus("rejected");
+            }
           }
         } else {
           // Rehydrated existing session — privateKey already present
