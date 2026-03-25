@@ -47,7 +47,7 @@ export interface WalletProvider {
   getKey: (chainId: string) => Promise<unknown>;
 }
 
-interface RawWalletObject {
+export interface RawWalletObject {
   mode?: string;
   experimentalSuggestChain?: (chainInfo: unknown) => Promise<void>;
   enable?: (chainId: string) => Promise<void>;

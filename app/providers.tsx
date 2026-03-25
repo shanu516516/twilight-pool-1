@@ -22,6 +22,7 @@ import { TwilightStoreProvider } from "@/lib/providers/store";
 import { SessionStoreProvider } from "@/lib/providers/session";
 import { DialogProvider } from "@/lib/providers/limit-dialogs";
 import LeaderboardOptInDialog from "@/app/_components/layout/leaderboard-opt-in-dialog.client";
+import SignRequestDialog from "@/app/_components/layout/sign-request-dialog.client";
 import { patchKeplrWallets } from "@/lib/wallets/keplr";
 
 // Create a client
@@ -74,6 +75,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 </PriceFeedProvider>
                 <LeaderboardOptInDialog />
               </TwilightStoreProvider>
+              <SignRequestDialog />
             </SessionStoreProvider>
             <Toaster />
           </TwilightProvider>

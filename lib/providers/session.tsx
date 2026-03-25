@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { type StoreApi, Mutate, useStore } from "zustand";
 import { SessionSlices } from "../state/utils";
 import { createSessionStore } from "../state/store";
@@ -11,6 +18,30 @@ import useIsMounted from "../hooks/useIsMounted";
 import dayjs from "dayjs";
 import { CandleInterval } from "../types";
 import { getCandleData } from "../api/rest";
+
+// ---------------------------------------------------------------------------
+// Sign status — tracks the "Hello Twilight!" signature request lifecycle
+// ---------------------------------------------------------------------------
+
+export type SignStatus = "idle" | "pending" | "signed" | "rejected" | "skipped";
+
+interface SignStatusContextValue {
+  signStatus: SignStatus;
+  retrySign: () => Promise<void>;
+  skipSign: () => void;
+}
+
+const signStatusContext = createContext<SignStatusContextValue>({
+  signStatus: "idle",
+  retrySign: async () => {},
+  skipSign: () => {},
+});
+
+export const useSignStatus = () => useContext(signStatusContext);
+
+// ---------------------------------------------------------------------------
+// Session store context
+// ---------------------------------------------------------------------------
 
 export const sessionStoreContext =
   createContext<StoreApi<SessionSlices> | null>(null);
@@ -36,9 +67,43 @@ export const SessionStoreProvider = ({
 
   const { mainWallet, status } = useWallet();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [signStatus, setSignStatus] = useState<SignStatus>("idle");
 
   const chainWallet = mainWallet?.getChainWallet("nyks");
   const isMounted = useIsMounted();
+
+  // Shared sign helper — updates status and stores the key on success
+  const requestSign = useCallback(async (): Promise<boolean> => {
+    const cw = mainWallet?.getChainWallet("nyks");
+    const addr = cw?.address;
+    if (!cw || !addr || !storeRef.current) return false;
+
+    setSignStatus("pending");
+
+    const [, newPrivateKey] = await generateSignMessage(
+      cw,
+      addr,
+      "Hello Twilight!"
+    );
+
+    if (newPrivateKey) {
+      storeRef.current.getState().setPrivateKey(newPrivateKey as string);
+      setSignStatus("signed");
+      return true;
+    }
+
+    // User rejected or sign failed
+    setSignStatus("rejected");
+    return false;
+  }, [mainWallet]);
+
+  const retrySign = useCallback(async () => {
+    await requestSign();
+  }, [requestSign]);
+
+  const skipSign = useCallback(() => {
+    setSignStatus("skipped");
+  }, []);
 
   async function generateTwilightPrivateKey() {
     if (status !== WalletStatus.Connected || !storeRef.current || !isHydrated)
@@ -48,6 +113,8 @@ export const SessionStoreProvider = ({
     const existingPrivateKey = storeRef.current.getState().privateKey;
 
     if (!chainWallet || existingPrivateKey) {
+      // Already signed — sync status
+      if (existingPrivateKey) setSignStatus("signed");
       return;
     }
 
@@ -57,13 +124,8 @@ export const SessionStoreProvider = ({
       return;
     }
 
-    const [_, newPrivateKey] = await generateSignMessage(
-      chainWallet,
-      twilightAddress,
-      "Hello Twilight!"
-    );
-
-    storeRef.current.getState().setPrivateKey(newPrivateKey as string);
+    const success = await requestSign();
+    if (!success) return;
     setIsHydrated(false);
   }
 
@@ -92,6 +154,7 @@ export const SessionStoreProvider = ({
             price: oldPrice,
           });
 
+          setSignStatus("idle");
           return;
         }
 
@@ -112,20 +175,38 @@ export const SessionStoreProvider = ({
         if (oldState === newState) {
           const oldPrice = storeRef.current.getState().price;
 
-          const [_, newPrivateKey] = await generateSignMessage(
+          setSignStatus("pending");
+          const [, newPrivateKey] = await generateSignMessage(
             chainWallet,
             chainAddress,
             "Hello Twilight!"
           );
 
-          storeRef.current.setState({
-            ...storeRef.current.getInitialState(),
-            price:
-              oldPrice.btcPrice === 0
-                ? storeRef.current.getState().price
-                : oldPrice,
-            privateKey: newPrivateKey as string,
-          });
+          if (newPrivateKey) {
+            storeRef.current.setState({
+              ...storeRef.current.getInitialState(),
+              price:
+                oldPrice.btcPrice === 0
+                  ? storeRef.current.getState().price
+                  : oldPrice,
+              privateKey: newPrivateKey as string,
+            });
+            setSignStatus("signed");
+          } else {
+            storeRef.current.setState({
+              ...storeRef.current.getInitialState(),
+              price:
+                oldPrice.btcPrice === 0
+                  ? storeRef.current.getState().price
+                  : oldPrice,
+            });
+            setSignStatus("rejected");
+          }
+        } else {
+          // Rehydrated existing session — privateKey already present
+          if (newState.privateKey) {
+            setSignStatus("signed");
+          }
         }
 
         setIsHydrated(true);
@@ -173,10 +254,14 @@ export const SessionStoreProvider = ({
   useGenerateTwilightPrivateKey();
   useRehydrateSessionStore();
 
+  const signCtx = { signStatus, retrySign, skipSign };
+
   return (
-    <sessionStoreContext.Provider value={storeRef.current}>
-      {children}
-    </sessionStoreContext.Provider>
+    <signStatusContext.Provider value={signCtx}>
+      <sessionStoreContext.Provider value={storeRef.current}>
+        {children}
+      </sessionStoreContext.Provider>
+    </signStatusContext.Provider>
   );
 };
 

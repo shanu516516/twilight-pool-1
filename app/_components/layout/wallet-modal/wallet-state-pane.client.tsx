@@ -196,6 +196,34 @@ export default function WalletStatePane({
     );
   }
 
+  // ── Suggesting chain (first-time extension users) ──
+  if (state.view === "suggesting_chain") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="relative">
+          <div className="rounded-2xl bg-primary/[0.06] p-3">
+            <NextImage
+              src={state.wallet.logo}
+              alt={state.wallet.name}
+              width={48}
+              height={48}
+              className="rounded-lg"
+            />
+          </div>
+          <Loader2 className="absolute -bottom-1 -right-1 h-5 w-5 animate-spin text-theme" />
+        </div>
+        <div>
+          <p className="text-sm font-medium">
+            Add Chain in {state.wallet.name}
+          </p>
+          <p className="mt-1 text-xs text-primary-accent">
+            Approve the Twilight chain in {state.wallet.name} to continue
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ── Connecting (extension/snap) ──
   if (state.view === "connecting") {
     return (
@@ -213,11 +241,10 @@ export default function WalletStatePane({
           <Loader2 className="absolute -bottom-1 -right-1 h-5 w-5 animate-spin text-theme" />
         </div>
         <div>
-          <p className="text-sm font-medium">Approve in {state.wallet.name}</p>
+          <p className="text-sm font-medium">Requesting Connection</p>
           <p className="mt-1 text-xs text-primary-accent">
-            Open the {state.wallet.name}{" "}
-            {state.wallet.platform === "snap" ? "snap" : "extension"} to
-            continue
+            Approve the connection request in {state.wallet.name}{" "}
+            {state.wallet.platform === "snap" ? "snap" : "extension"}
           </p>
         </div>
         {showSlowHint && (

@@ -6,7 +6,10 @@ import { CHAIN_NAME } from "@/lib/constants/chain";
 import { WalletEntry, WALLET_REGISTRY } from "@/lib/wallets/registry";
 import { WalletErrorType, classifyWalletError } from "@/lib/wallets/errors";
 import { connectWithTimeout } from "@/lib/wallets/connect-with-timeout";
-import { getInAppWalletProvider } from "@/lib/wallets/detect";
+import {
+  getInAppWalletProvider,
+  type RawWalletObject,
+} from "@/lib/wallets/detect";
 import { buildChainInfo } from "@/lib/wallets/chain-info";
 import { twilightTestnet, twilightTestnetAssets } from "@/lib/chaindata";
 import { useTwilight } from "@/lib/providers/twilight";
@@ -17,6 +20,7 @@ import { useTwilight } from "@/lib/providers/twilight";
 
 export type ConnectionState =
   | { view: "idle" }
+  | { view: "suggesting_chain"; wallet: WalletEntry }
   | { view: "connecting"; wallet: WalletEntry }
   | { view: "qr"; wallet: WalletEntry; qrUri: string }
   | { view: "error"; wallet: WalletEntry; errorType: WalletErrorType }
@@ -129,13 +133,13 @@ export function useWalletConnection(): UseWalletConnectionReturn {
         return;
       }
 
-      setState({ view: "connecting", wallet });
       forceDisconnectedRef.current = false;
 
       try {
         // In-app browser: suggest chain before connecting so the wallet knows about it
         const inAppProvider = getInAppWalletProvider();
         if (inAppProvider) {
+          setState({ view: "suggesting_chain", wallet });
           try {
             const chainInfo = buildChainInfo(
               twilightTestnet,
@@ -152,7 +156,31 @@ export function useWalletConnection(): UseWalletConnectionReturn {
             }
             // Otherwise continue — chain may already exist
           }
+        } else if (wallet.windowKey) {
+          // Desktop extension: suggest chain directly via window object
+          const ext = (
+            window as unknown as Record<string, RawWalletObject | undefined>
+          )[wallet.windowKey];
+          if (ext?.experimentalSuggestChain) {
+            setState({ view: "suggesting_chain", wallet });
+            try {
+              const chainInfo = buildChainInfo(
+                twilightTestnet,
+                twilightTestnetAssets
+              );
+              await ext.experimentalSuggestChain(chainInfo);
+            } catch (suggestErr) {
+              const errType = classifyWalletError(suggestErr);
+              if (errType === "rejected") {
+                setState({ view: "error", wallet, errorType: "rejected" });
+                return;
+              }
+              // Otherwise continue — chain may already exist
+            }
+          }
         }
+
+        setState({ view: "connecting", wallet });
 
         if (wallet.platform === "mobile") {
           // For mobile wallets, start connect and poll for QR URI
