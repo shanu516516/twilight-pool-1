@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ConnectionState } from "@/lib/hooks/useWalletConnection";
 import { getErrorMessage } from "@/lib/wallets/errors";
 import { getWalletDeepLink } from "@/lib/wallets/deep-links";
+import { isMobileBrowser } from "@/lib/utils/is-mobile";
 import NextImage from "@/components/next-image";
 import Button from "@/components/button";
 import {
@@ -233,6 +234,44 @@ export default function WalletStatePane({
 
   // ── QR code (mobile wallets) ──
   if (state.view === "qr") {
+    const isMobile = isMobileBrowser();
+
+    // Mobile: no QR (can't scan own screen), show waiting state
+    if (isMobile) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+          <div className="relative">
+            <div className="rounded-2xl bg-primary/[0.06] p-3">
+              <NextImage
+                src={state.wallet.logo}
+                alt={state.wallet.name}
+                width={48}
+                height={48}
+                className="rounded-lg"
+              />
+            </div>
+            <Loader2 className="absolute -bottom-1 -right-1 h-5 w-5 animate-spin text-theme" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">
+              Opening {state.wallet.name}...
+            </p>
+            <p className="mt-1 text-xs text-primary-accent">
+              Approve the connection in the {state.wallet.name} app
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-primary-accent/60 underline transition-colors hover:text-primary-accent"
+          >
+            Go back
+          </button>
+        </div>
+      );
+    }
+
+    // Desktop: show QR code
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
         <WalletQRCode uri={state.qrUri} logoSrc={state.wallet.logo} />

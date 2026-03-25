@@ -13,6 +13,7 @@ export interface WalletEntry {
   downloadUrl?: string;
   downloadLinks?: DownloadLink[];
   windowKey?: string;
+  supportsWalletConnect?: boolean;
 }
 
 export const WALLET_REGISTRY: WalletEntry[] = [
@@ -95,6 +96,7 @@ export const WALLET_REGISTRY: WalletEntry[] = [
     name: "Keplr Mobile",
     logo: "/images/keplr-logo.png",
     platform: "mobile",
+    supportsWalletConnect: true,
     downloadLinks: [
       {
         browser: "ios",

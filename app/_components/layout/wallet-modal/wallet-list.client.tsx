@@ -4,9 +4,17 @@ import { useMemo } from "react";
 import cn from "@/lib/cn";
 import { categorizeWallets } from "@/lib/wallets/detect";
 import { WalletEntry } from "@/lib/wallets/registry";
+import { getWalletDeepLink } from "@/lib/wallets/deep-links";
+import { isMobileBrowser } from "@/lib/utils/is-mobile";
 import { ConnectionState } from "@/lib/hooks/useWalletConnection";
 import NextImage from "@/components/next-image";
-import { ChevronRight, Loader2 } from "lucide-react";
+import Button from "@/components/button";
+import {
+  ChevronRight,
+  Loader2,
+  Smartphone,
+  Link as LinkIcon,
+} from "lucide-react";
 
 interface WalletListProps {
   state: ConnectionState;
@@ -73,8 +81,71 @@ function WalletRow({
   );
 }
 
+function MobileWalletCard({
+  wallet,
+  isActive,
+  isConnecting,
+  onSelect,
+}: {
+  wallet: WalletEntry;
+  isActive: boolean;
+  isConnecting: boolean;
+  onSelect: () => void;
+}) {
+  const deepLinkUrl = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    return getWalletDeepLink(wallet.id, window.location.origin + "/add-chain");
+  }, [wallet.id]);
+
+  const shortName = wallet.name.replace(" Mobile", "");
+
+  return (
+    <div className="border-outline/50 rounded-lg border p-3">
+      <div className="mb-3 flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.06]">
+          <NextImage
+            src={wallet.logo}
+            alt={wallet.name}
+            width={24}
+            height={24}
+            className="rounded-sm"
+          />
+        </div>
+        <span className="text-sm font-medium">{wallet.name}</span>
+      </div>
+
+      {deepLinkUrl && (
+        <Button asChild size="small" className="mb-2 w-full gap-1.5 text-xs">
+          <a href={deepLinkUrl}>
+            <Smartphone className="h-3.5 w-3.5" />
+            Open in {shortName}
+          </a>
+        </Button>
+      )}
+
+      {wallet.supportsWalletConnect && (
+        <Button
+          variant="ui"
+          size="small"
+          className="w-full gap-1.5 text-xs"
+          onClick={onSelect}
+          disabled={isConnecting}
+        >
+          {isActive && isConnecting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <LinkIcon className="h-3.5 w-3.5" />
+          )}
+          Connect via WalletConnect
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export default function WalletList({ state, onSelect }: WalletListProps) {
   const categories = useMemo(() => categorizeWallets(), []);
+  const isMobile = useMemo(() => isMobileBrowser(), []);
 
   const activeWalletId = state.view !== "idle" ? state.wallet.id : null;
   const isConnecting = state.view === "connecting" || state.view === "qr";
@@ -102,16 +173,30 @@ export default function WalletList({ state, onSelect }: WalletListProps) {
 
       {hasMobile && (
         <>
-          {(hasInstalled || hasOther) && <SectionHeader label="Mobile" />}
-          {categories.mobile.map((w) => (
-            <WalletRow
-              key={w.id}
-              wallet={w}
-              isActive={activeWalletId === w.id}
-              isConnecting={isConnecting && activeWalletId === w.id}
-              onClick={() => onSelect(w)}
-            />
-          ))}
+          {!isMobile && (hasInstalled || hasOther) && (
+            <SectionHeader label="Mobile" />
+          )}
+          <div className={cn(isMobile && "flex flex-col gap-2")}>
+            {categories.mobile.map((w) =>
+              isMobile ? (
+                <MobileWalletCard
+                  key={w.id}
+                  wallet={w}
+                  isActive={activeWalletId === w.id}
+                  isConnecting={isConnecting && activeWalletId === w.id}
+                  onSelect={() => onSelect(w)}
+                />
+              ) : (
+                <WalletRow
+                  key={w.id}
+                  wallet={w}
+                  isActive={activeWalletId === w.id}
+                  isConnecting={isConnecting && activeWalletId === w.id}
+                  onClick={() => onSelect(w)}
+                />
+              )
+            )}
+          </div>
         </>
       )}
 
