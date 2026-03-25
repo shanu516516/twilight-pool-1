@@ -11,6 +11,7 @@ export function classifyWalletError(err: unknown): WalletErrorType {
   if (message === "CONNECTION_TIMEOUT") return "timeout";
   if (/reject|denied|cancelled|cancel/i.test(message)) return "rejected";
   if (/not.*(found|installed|exist)/i.test(message)) return "not_installed";
+  if (/extension.*context.*invalidated/i.test(message)) return "not_installed";
   if (/network|fetch|CORS|socket/i.test(message)) return "network";
 
   return "unknown";

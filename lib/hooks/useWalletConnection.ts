@@ -44,11 +44,14 @@ export function useWalletConnection(): UseWalletConnectionReturn {
   const [state, setState] = useState<ConnectionState>({ view: "idle" });
   const lastWalletRef = useRef<WalletEntry | null>(null);
   const qrPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Tracks explicit disconnect to override stale cosmos-kit state
+  // (e.g. when extension is disabled and disconnect() can't clear internal state)
+  const forceDisconnectedRef = useRef(false);
 
   // Derived state
-  const isConnected = status === "Connected";
+  const isConnected = status === "Connected" && !forceDisconnectedRef.current;
   const chainWallet = mainWallet?.getChainWallet(CHAIN_NAME);
-  const address = chainWallet?.address;
+  const address = isConnected ? chainWallet?.address : undefined;
 
   // Clean up QR polling on unmount
   useEffect(() => {
@@ -127,6 +130,7 @@ export function useWalletConnection(): UseWalletConnectionReturn {
       }
 
       setState({ view: "connecting", wallet });
+      forceDisconnectedRef.current = false;
 
       try {
         // In-app browser: suggest chain before connecting so the wallet knows about it
@@ -210,11 +214,14 @@ export function useWalletConnection(): UseWalletConnectionReturn {
   // Disconnect
   // ------------------------------------------
   const disconnect = useCallback(async () => {
+    forceDisconnectedRef.current = true;
     try {
       await mainWallet?.disconnect(false, {
         walletconnect: { removeAllPairings: true },
       });
     } catch (err) {
+      // Extension may be disabled/removed — disconnect fails but we still
+      // want the UI to reflect disconnected state (handled by forceDisconnectedRef)
       console.error("Failed to disconnect:", err);
     }
     setState({ view: "idle" });
