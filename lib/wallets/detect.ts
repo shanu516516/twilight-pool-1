@@ -117,13 +117,18 @@ export function categorizeWallets(): CategorizedWallets {
     };
   }
 
+  const showKeplrMobileDesktop =
+    process.env.NEXT_PUBLIC_SHOW_KEPLR_MOBILE_DESKTOP === "true";
+
   const installed: WalletEntry[] = [];
   const mobile: WalletEntry[] = [];
   const other: WalletEntry[] = [];
 
   for (const wallet of WALLET_REGISTRY) {
     if (wallet.platform === "mobile") {
-      mobile.push(wallet);
+      if (showKeplrMobileDesktop) {
+        mobile.push(wallet);
+      }
       continue;
     }
 

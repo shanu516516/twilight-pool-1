@@ -5,7 +5,11 @@ import cn from "@/lib/cn";
 import { categorizeWallets } from "@/lib/wallets/detect";
 import { WalletEntry } from "@/lib/wallets/registry";
 import { getWalletDeepLink } from "@/lib/wallets/deep-links";
-import { isMobileBrowser } from "@/lib/utils/is-mobile";
+import {
+  isMobileBrowser,
+  isAndroidBrowser,
+  isIOSBrowser,
+} from "@/lib/utils/is-mobile";
 import { ConnectionState } from "@/lib/hooks/useWalletConnection";
 import NextImage from "@/components/next-image";
 import Button from "@/components/button";
@@ -187,6 +191,16 @@ function MobileWalletCard({
 }) {
   const [showSetup, setShowSetup] = useState(false);
 
+  const showWalletConnect = useMemo(() => {
+    if (isAndroidBrowser()) {
+      return process.env.NEXT_PUBLIC_SHOW_WC_ANDROID === "true";
+    }
+    if (isIOSBrowser()) {
+      return process.env.NEXT_PUBLIC_SHOW_WC_IOS === "true";
+    }
+    return true;
+  }, []);
+
   const browserDeepLink = useMemo(() => {
     if (typeof window === "undefined") return null;
     return getWalletDeepLink(wallet.id, window.location.origin);
@@ -241,7 +255,7 @@ function MobileWalletCard({
           </Button>
         )}
 
-        {wallet.supportsWalletConnect && (
+        {wallet.supportsWalletConnect && showWalletConnect && (
           <Button
             variant="ui"
             className="w-full gap-2 rounded-lg py-3 text-sm"
