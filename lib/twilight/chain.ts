@@ -55,14 +55,24 @@ async function signWithLeapAmino(
   }
 }
 
+function isLeapInAppBrowser(): boolean {
+  if (typeof window === "undefined") return false;
+  const leap = (window as unknown as Record<string, { mode?: string }>).leap;
+  return leap?.mode === "mobile-web";
+}
+
 async function generateSignMessage(
   chainWallet: ChainWalletBase,
   twAddress: string,
   message: string
 ) {
+  // Leap in-app browser: skip signArbitrary, go straight to signAmino
+  if (isLeapInAppBrowser()) {
+    return signWithLeapAmino(twAddress, message);
+  }
+
   const client = chainWallet.client;
 
-  // Try signArbitrary first (works on Keplr, desktop Leap, etc.)
   if (client?.signArbitrary) {
     try {
       const { pub_key, signature } = await client.signArbitrary(
@@ -72,12 +82,11 @@ async function generateSignMessage(
       );
       return [pub_key, signature];
     } catch (err) {
-      console.warn("signArbitrary failed, trying signAmino fallback:", err);
+      console.error("signArbitrary failed:", err);
     }
   }
 
-  // Fallback to signAmino for Leap mobile
-  return signWithLeapAmino(twAddress, message);
+  return ["", ""];
 }
 
 async function getBlockHeight(chainWallet: ChainWalletBase) {
