@@ -36,25 +36,6 @@ export const WALLET_REGISTRY: WalletEntry[] = [
     windowKey: "keplr",
   },
   {
-    id: "cosmostation-extension",
-    name: "Cosmostation",
-    logo: "/images/cosmostation-logo.png",
-    downloadUrl:
-      "https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf",
-    platform: "extension",
-    downloadLinks: [
-      {
-        browser: "chrome",
-        url: "https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf",
-      },
-      {
-        browser: "brave",
-        url: "https://chromewebstore.google.com/detail/cosmostation-wallet/fpkhgmpbidmiogeglndfbkegfdlnajnf",
-      },
-    ],
-    windowKey: "cosmostation",
-  },
-  {
     id: "leap-extension",
     name: "Leap",
     logo: "/images/leap-logo.png",
@@ -105,38 +86,6 @@ export const WALLET_REGISTRY: WalletEntry[] = [
       {
         browser: "android",
         url: "https://play.google.com/store/apps/details?id=com.chainapsis.keplr",
-      },
-    ],
-  },
-  {
-    id: "cosmostation-mobile",
-    name: "Cosmostation Mobile",
-    logo: "/images/cosmostation-logo.png",
-    platform: "mobile",
-    downloadLinks: [
-      {
-        browser: "ios",
-        url: "https://apps.apple.com/app/cosmostation/id1459830339",
-      },
-      {
-        browser: "android",
-        url: "https://play.google.com/store/apps/details?id=wannabit.io.cosmostaion",
-      },
-    ],
-  },
-  {
-    id: "leap-cosmos-mobile",
-    name: "Leap Mobile",
-    logo: "/images/leap-logo.png",
-    platform: "mobile",
-    downloadLinks: [
-      {
-        browser: "ios",
-        url: "https://apps.apple.com/app/leap-cosmos/id1642465549",
-      },
-      {
-        browser: "android",
-        url: "https://play.google.com/store/apps/details?id=io.leapwallet.cosmos",
       },
     ],
   },

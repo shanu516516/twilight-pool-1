@@ -38,15 +38,6 @@ export function detectInAppBrowser(): WalletEntry | null {
     return WALLET_REGISTRY.find((e) => e.id === "keplr-extension") ?? null;
   }
 
-  const cosmostation = w.cosmostation as
-    | { providers?: { keplr?: { mode?: string } } }
-    | undefined;
-  if (cosmostation?.providers?.keplr?.mode === "mobile-web") {
-    return (
-      WALLET_REGISTRY.find((e) => e.id === "cosmostation-extension") ?? null
-    );
-  }
-
   return null;
 }
 
@@ -96,17 +87,6 @@ export function getInAppWalletProvider(): {
     return { name: "Keplr", provider: keplr };
   }
 
-  const cosmostation = w.cosmostation as
-    | { providers?: { keplr?: RawWalletObject } }
-    | undefined;
-  const cosmostationKeplr = cosmostation?.providers?.keplr;
-  if (
-    cosmostationKeplr?.mode === "mobile-web" &&
-    isValidProvider(cosmostationKeplr)
-  ) {
-    return { name: "Cosmostation", provider: cosmostationKeplr };
-  }
-
   return null;
 }
 
@@ -132,9 +112,7 @@ export function categorizeWallets(): CategorizedWallets {
   if (isMobile) {
     return {
       installed: [],
-      mobile: WALLET_REGISTRY.filter(
-        (w) => w.platform === "mobile" && w.id !== "leap-cosmos-mobile"
-      ),
+      mobile: WALLET_REGISTRY.filter((w) => w.platform === "mobile"),
       other: [],
     };
   }

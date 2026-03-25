@@ -6,6 +6,9 @@ import { CHAIN_NAME } from "@/lib/constants/chain";
 import { WalletEntry, WALLET_REGISTRY } from "@/lib/wallets/registry";
 import { WalletErrorType, classifyWalletError } from "@/lib/wallets/errors";
 import { connectWithTimeout } from "@/lib/wallets/connect-with-timeout";
+import { getInAppWalletProvider } from "@/lib/wallets/detect";
+import { buildChainInfo } from "@/lib/wallets/chain-info";
+import { twilightTestnet, twilightTestnetAssets } from "@/lib/chaindata";
 import { useTwilight } from "@/lib/providers/twilight";
 
 // ---------------------------------------------------------------------------
@@ -126,6 +129,27 @@ export function useWalletConnection(): UseWalletConnectionReturn {
       setState({ view: "connecting", wallet });
 
       try {
+        // In-app browser: suggest chain before connecting so the wallet knows about it
+        const inAppProvider = getInAppWalletProvider();
+        if (inAppProvider) {
+          try {
+            const chainInfo = buildChainInfo(
+              twilightTestnet,
+              twilightTestnetAssets
+            );
+            await inAppProvider.provider.experimentalSuggestChain(chainInfo);
+            await inAppProvider.provider.enable(CHAIN_NAME);
+          } catch (suggestErr) {
+            // If user rejects suggestion, treat as rejection error
+            const errType = classifyWalletError(suggestErr);
+            if (errType === "rejected") {
+              setState({ view: "error", wallet, errorType: "rejected" });
+              return;
+            }
+            // Otherwise continue — chain may already exist
+          }
+        }
+
         if (wallet.platform === "mobile") {
           // For mobile wallets, start connect and poll for QR URI
           const connectPromise = connectWithTimeout(

@@ -14,24 +14,6 @@ const DEEP_LINK_MAP: Record<string, DeepLinkBuilder> = {
     android: (url) =>
       `intent://web-browser?url=${encodeURIComponent(url)}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`,
   },
-  "leap-cosmos-mobile": {
-    ios: (url) => {
-      const base =
-        process.env.NEXT_PUBLIC_LEAP_DEEPLINK_URL ||
-        "https://leapcosmoswallet.page.link/zgLSwG7GhBjXSjWs9";
-      return `${base}?url=${encodeURIComponent(url)}`;
-    },
-    android: (url) => {
-      const base =
-        process.env.NEXT_PUBLIC_LEAP_DEEPLINK_URL ||
-        "https://leapcosmoswallet.page.link/zgLSwG7GhBjXSjWs9";
-      return `${base}?url=${encodeURIComponent(url)}`;
-    },
-  },
-  "cosmostation-mobile": {
-    ios: (url) => `cosmostation://browser?url=${encodeURIComponent(url)}`,
-    android: (url) => `cosmostation://browser?url=${encodeURIComponent(url)}`,
-  },
 };
 
 /**
