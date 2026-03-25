@@ -217,7 +217,7 @@ export default function WalletStatePane({
             Add Chain in {state.wallet.name}
           </p>
           <p className="mt-1 text-xs text-primary-accent">
-            Approve the Twilight chain in {state.wallet.name} to continue
+            Approve the Nyks chain in {state.wallet.name} to continue
           </p>
         </div>
       </div>

@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogTrigger } from "@/components/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/popover";
 import Button from "@/components/button";
-import NextImage from "@/components/next-image";
 import { useWalletConnection } from "@/lib/hooks/useWalletConnection";
 import { truncateAddress } from "@/lib/utils/address";
-import { WALLET_REGISTRY } from "@/lib/wallets/registry";
 import WalletModal from "./wallet-modal/wallet-modal.client";
 import { Check, Copy, LogOut, Wallet } from "lucide-react";
 
@@ -19,11 +17,17 @@ export default function ConnectWallet() {
   const [copied, setCopied] = useState(false);
 
   // Auto-close modal only when fully connected (address resolved)
+  // Skip if a connection flow is actively in progress (prevents stale state from closing modal)
+  const isActivelyConnecting =
+    state.view === "connecting" ||
+    state.view === "suggesting_chain" ||
+    state.view === "qr";
+
   useEffect(() => {
-    if (isConnected && address && dialogOpen) {
+    if (isConnected && address && dialogOpen && !isActivelyConnecting) {
       setDialogOpen(false);
     }
-  }, [isConnected, address, dialogOpen]);
+  }, [isConnected, address, dialogOpen, isActivelyConnecting]);
 
   // Reset connection state when dialog closes (but not on initial mount)
   useEffect(() => {
@@ -39,11 +43,6 @@ export default function ConnectWallet() {
     const t = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(t);
   }, [copied]);
-
-  // Find connected wallet logo
-  const connectedWallet = WALLET_REGISTRY.find(
-    (w) => state.view !== "idle" && w.id === state.wallet.id
-  );
 
   if (isConnected && address) {
     return (

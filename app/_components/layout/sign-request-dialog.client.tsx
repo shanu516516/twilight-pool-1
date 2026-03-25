@@ -47,8 +47,8 @@ function PendingView({ walletName }: { walletName: string }) {
           Approve in {walletName}
         </DialogTitle>
         <DialogDescription className="mt-2 text-sm text-primary-accent">
-          Sign request sent to {walletName}. This generates a session key for
-          secure trading.
+          Sign request sent to {walletName}. Verify Ownership: Confirm you are
+          the owner of this wallet.
         </DialogDescription>
       </div>
     </div>

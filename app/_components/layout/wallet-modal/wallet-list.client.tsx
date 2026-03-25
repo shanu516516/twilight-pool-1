@@ -266,7 +266,10 @@ export default function WalletList({ state, onSelect }: WalletListProps) {
   const isMobile = useMemo(() => isMobileBrowser(), []);
 
   const activeWalletId = state.view !== "idle" ? state.wallet.id : null;
-  const isConnecting = state.view === "connecting" || state.view === "qr";
+  const isConnecting =
+    state.view === "connecting" ||
+    state.view === "suggesting_chain" ||
+    state.view === "qr";
 
   const hasInstalled = categories.installed.length > 0;
   const hasMobile = categories.mobile.length > 0;

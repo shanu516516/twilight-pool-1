@@ -48,6 +48,8 @@ export function useWalletConnection(): UseWalletConnectionReturn {
   const [state, setState] = useState<ConnectionState>({ view: "idle" });
   const lastWalletRef = useRef<WalletEntry | null>(null);
   const qrPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Tracks active connection to prevent auto-reset/auto-close from stale state
+  const connectingRef = useRef(false);
   // Tracks explicit disconnect to override stale cosmos-kit state
   // (e.g. when extension is disabled and disconnect() can't clear internal state)
   const forceDisconnectedRef = useRef(false);
@@ -89,8 +91,14 @@ export function useWalletConnection(): UseWalletConnectionReturn {
   }, [mainWallet, status]);
 
   // Auto-reset to idle when connection fully succeeds (status + address)
+  // Skip if a connect() call is actively in-flight (prevents stale state from closing modal)
   useEffect(() => {
-    if (isConnected && address && state.view !== "idle") {
+    if (
+      isConnected &&
+      address &&
+      state.view !== "idle" &&
+      !connectingRef.current
+    ) {
       setState({ view: "idle" });
     }
   }, [isConnected, address, state.view]);
@@ -106,6 +114,7 @@ export function useWalletConnection(): UseWalletConnectionReturn {
         qrPollRef.current = null;
       }
 
+      connectingRef.current = true;
       lastWalletRef.current = wallet;
 
       // Mark first-time initialization
@@ -118,6 +127,7 @@ export function useWalletConnection(): UseWalletConnectionReturn {
       try {
         walletRepo = getWalletRepo(CHAIN_NAME);
       } catch {
+        connectingRef.current = false;
         setState({
           view: "error",
           wallet,
@@ -129,6 +139,7 @@ export function useWalletConnection(): UseWalletConnectionReturn {
       const targetChainWallet = walletRepo.getWallet(wallet.id);
 
       if (!targetChainWallet) {
+        connectingRef.current = false;
         setState({ view: "not_installed", wallet });
         return;
       }
@@ -233,6 +244,8 @@ export function useWalletConnection(): UseWalletConnectionReturn {
         } else {
           setState({ view: "error", wallet, errorType });
         }
+      } finally {
+        connectingRef.current = false;
       }
     },
     [getWalletRepo, hasInit, setHasInit]
