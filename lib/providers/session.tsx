@@ -14,6 +14,7 @@ import { createSessionStore } from "../state/store";
 import { useWallet } from "@cosmos-kit/react-lite";
 import { WalletStatus } from "@cosmos-kit/core";
 import { generateSignMessage } from "../twilight/chain";
+import { detectInAppBrowser } from "../wallets/detect";
 import useIsMounted from "../hooks/useIsMounted";
 import dayjs from "dayjs";
 import { CandleInterval } from "../types";
@@ -158,6 +159,14 @@ export const SessionStoreProvider = ({
           return;
         }
 
+        // In-app browsers: cosmos-kit auto-reconnects and calls
+        // experimentalSuggestChain during _restoreAccounts. Wait for the
+        // connection to fully settle before sending the sign request,
+        // otherwise both hit the wallet simultaneously and crash Keplr.
+        if (detectInAppBrowser() && status !== WalletStatus.Connected) {
+          return;
+        }
+
         const chainAddress = chainWallet.address;
 
         if (!chainAddress) return;
@@ -214,7 +223,7 @@ export const SessionStoreProvider = ({
 
       rehydrateSessionStore();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chainWallet?.address]);
+    }, [chainWallet?.address, status]);
   }
 
   function useOnMount() {
