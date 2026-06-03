@@ -345,13 +345,19 @@ async function getLendPoolInfo() {
 export type MarketStatsData = {
   long_pct: number;
   short_pct: number;
-  open_interest_btc: number;
-  total_long_btc: number;
-  total_short_btc: number;
-  net_exposure_btc: number;
-  pool_equity_btc: number;
-  max_long_btc: number;
-  max_short_btc: number;
+  // Exposure/limits are USD notional (im * leverage * entry_price), scaled by 1e8
+  // (margin is in sats). Divide by 1e8 for real USD. See get_market_stats.
+  open_interest_usd: number;
+  total_long_usd: number;
+  total_short_usd: number;
+  total_pending_long_usd: number;
+  total_pending_short_usd: number;
+  net_exposure_usd: number;
+  pool_equity_btc: number; // raw locked value (sats)
+  pool_equity_usd: number; // pool_equity_btc * mark_price (USD * 1e8)
+  mark_price: number; // current index/mark price (USD/BTC)
+  max_long_usd: number;
+  max_short_usd: number;
   utilization: number;
   status: string;
   status_reason: string | null;

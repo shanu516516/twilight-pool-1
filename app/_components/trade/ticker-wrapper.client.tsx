@@ -75,8 +75,8 @@ const TickerWrapper = () => {
 
   const fundingImbalancePercent = useMemo(() => {
     if (!marketStats.data) return 0;
-    const totalLong = marketStats.data.total_long_btc;
-    const totalShort = marketStats.data.total_short_btc;
+    const totalLong = marketStats.data.total_long_usd;
+    const totalShort = marketStats.data.total_short_usd;
     const allPositionSize = totalLong + totalShort;
     if (!Number.isFinite(allPositionSize) || allPositionSize <= 0) return 0;
     return Math.abs(((totalLong - totalShort) / allPositionSize) * 100);
@@ -396,28 +396,21 @@ const TickerWrapper = () => {
               placeholder={<Skeleton className="mt-1 h-4 w-[80px]" />}
             >
               {(() => {
-                const longSats = marketStats.data?.max_long_btc ?? 0;
-                const shortSats = marketStats.data?.max_short_btc ?? 0;
-                const longBtc = longSats / 1e8;
-                const shortBtc = shortSats / 1e8;
-                const useMBTC =
-                  (longBtc > 0 && longBtc < 0.1) ||
-                  (shortBtc > 0 && shortBtc < 0.1);
-                const denom = useMBTC ? "mBTC" : "BTC";
-                const divisor = useMBTC ? 1e5 : 1e8;
+                // max_*_usd is USD notional scaled by 1e8.
+                const longUsd = (marketStats.data?.max_long_usd ?? 0) / 1e8;
+                const shortUsd = (marketStats.data?.max_short_usd ?? 0) / 1e8;
                 return (
                   <div className="mt-1 flex min-w-0 flex-col gap-0.5">
                     <span className="inline-flex items-baseline gap-0.5 whitespace-nowrap text-[12px] font-medium tabular-nums leading-none text-primary">
                       <span className="text-green-medium">
-                        {(longSats / divisor).toFixed(2)}
+                        {formatCurrency(longUsd, "short")}
                       </span>
                       <span className="text-primary-accent/75">L</span>
                       <span className="text-primary-accent/50">·</span>
                       <span className="text-red">
-                        {(shortSats / divisor).toFixed(2)}
+                        {formatCurrency(shortUsd, "short")}
                       </span>
                       <span className="text-primary-accent/75">S</span>
-                      <span className="text-primary-accent">{` ${denom}`}</span>
                     </span>
                   </div>
                 );
@@ -658,28 +651,21 @@ const TickerWrapper = () => {
             placeholder={<Skeleton className="h-6 w-[112px]" />}
           >
             {(() => {
-              const longSats = marketStats.data?.max_long_btc ?? 0;
-              const shortSats = marketStats.data?.max_short_btc ?? 0;
-              const longBtc = longSats / 1e8;
-              const shortBtc = shortSats / 1e8;
-              const useMBTC =
-                (longBtc > 0 && longBtc < 0.1) ||
-                (shortBtc > 0 && shortBtc < 0.1);
-              const denom = useMBTC ? "mBTC" : "BTC";
-              const divisor = useMBTC ? 1e5 : 1e8;
+              // max_*_usd is USD notional scaled by 1e8.
+              const longUsd = (marketStats.data?.max_long_usd ?? 0) / 1e8;
+              const shortUsd = (marketStats.data?.max_short_usd ?? 0) / 1e8;
 
               return (
                 <span className="tabular-nums">
                   <span className="text-green-medium">
-                    {(longSats / divisor).toFixed(2)}
+                    {formatCurrency(longUsd, "short")}
                   </span>
                   <span className="text-primary/45 text-[11px]">L</span>
                   <span className="text-primary/32 text-[11px]">{" · "}</span>
                   <span className="text-red">
-                    {(shortSats / divisor).toFixed(2)}
+                    {formatCurrency(shortUsd, "short")}
                   </span>
                   <span className="text-primary/45 text-[11px]">S</span>
-                  <span className="text-primary/45 text-[11px]">{` ${denom}`}</span>
                 </span>
               );
             })()}

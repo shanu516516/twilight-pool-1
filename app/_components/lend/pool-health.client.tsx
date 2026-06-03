@@ -55,9 +55,14 @@ function NetExposureDirection({ netBtc }: { netBtc: number }) {
   );
 }
 
-function formatNetExposureBtc(sats: number): string {
-  const btc = sats / 1e8;
-  return `${Math.abs(btc).toFixed(4)} BTC`;
+function formatNetExposureUsd(usdScaled: number): string {
+  // net_exposure_usd is USD notional scaled by 1e8 (margin is in sats).
+  const usd = usdScaled / 1e8;
+  return new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(Math.abs(usd));
 }
 
 export default function PoolHealth() {
@@ -72,7 +77,7 @@ export default function PoolHealth() {
 
   const utilPct =
     utilization != null ? (utilization <= 1 ? utilization * 100 : utilization) : NaN;
-  const netBtc = data != null ? data.net_exposure_btc / 1e8 : 0;
+  const netUsd = data != null ? data.net_exposure_usd / 1e8 : 0;
 
   return (
     <div className="grid grid-cols-2 gap-3 md:gap-x-8">
@@ -123,9 +128,9 @@ export default function PoolHealth() {
           {data != null ? (
             <div className="flex flex-col gap-0.5">
               <Text className="text-sm font-medium md:text-base">
-                {formatNetExposureBtc(data.net_exposure_btc)}
+                {formatNetExposureUsd(data.net_exposure_usd)}
               </Text>
-              <NetExposureDirection netBtc={netBtc} />
+              <NetExposureDirection netBtc={netUsd} />
             </div>
           ) : (
             <Text>—</Text>

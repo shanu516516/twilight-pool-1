@@ -102,8 +102,10 @@ export default function usePriceTickerData(currentPrice: number) {
       return { openInterest: 0, openInterestBtc: 0 };
     }
 
-    const openInterestBtc = marketStatsQuery.data.open_interest_btc / 1e8;
-    const openInterest = openInterestBtc * currentPrice;
+    // open_interest_usd is already USD notional (fixed at entry price), scaled by 1e8.
+    const openInterest = marketStatsQuery.data.open_interest_usd / 1e8;
+    // Approximate BTC-equivalent at the current price for display.
+    const openInterestBtc = currentPrice > 0 ? openInterest / currentPrice : 0;
 
     return { openInterest, openInterestBtc };
   }, [marketStatsQuery.data, currentPrice]);

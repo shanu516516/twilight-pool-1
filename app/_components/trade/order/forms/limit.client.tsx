@@ -666,16 +666,23 @@ const OrderLimitForm = () => {
       const leverageVal = parseInt(leverage || "1", 10);
       const positionType = action === "sell" ? "SHORT" : "LONG";
 
-      const orderValue = btcAmountInSats * leverageVal;
+      // Risk caps are USD notional (= margin_sats * leverage * entry_price), scaled by
+      // 1e8. A limit order's notional is fixed at its limit price.
+      const orderValue = btcAmountInSats * leverageVal * orderPrice;
       const maxPosition =
         positionType === "LONG"
-          ? marketStats.data?.max_long_btc
-          : marketStats.data?.max_short_btc;
+          ? marketStats.data?.max_long_usd
+          : marketStats.data?.max_short_usd;
       if (maxPosition !== undefined && orderValue > maxPosition) {
+        const maxUsd = new Intl.NumberFormat("en", {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 2,
+        }).format(maxPosition / 1e8);
         toast({
           variant: "error",
           title: "Order exceeds maximum position size",
-          description: `Maximum ${positionType.toLowerCase()} position size is ${BTC.formatSatsAuto(maxPosition).value} ${BTC.formatSatsAuto(maxPosition).denom}.`,
+          description: `Maximum ${positionType.toLowerCase()} position size is ${maxUsd}.`,
         });
         return;
       }
